@@ -1,0 +1,542 @@
+<html>
+
+<head>
+    <title>地形分類図（pbf）</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src='https://unpkg.com/maplibre-gl@3.1.0/dist/maplibre-gl.js'></script>
+    <link href='https://unpkg.com/maplibre-gl@3.1.0/dist/maplibre-gl.css' rel='stylesheet' />
+    <script src='maplibre-gl-gsi-terrain.js'></script>
+    <script src="https://unpkg.com/pmtiles@2.7.0/dist/index.js"></script>
+    <style>
+        body {
+            margin: 0;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+
+        .map-overlay {
+            font: bold 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+            position: absolute;
+            width: 220px;
+            bottom: 20px;
+            left: 0;
+            padding: 10px;
+        }
+
+        .map-overlay .map-overlay-inner {
+            background-color: #fff;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .map-overlay label {
+            display: block;
+            margin: 0 0 0px;
+            font-size: 12px;
+            top: 100px;
+            left: 10px;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .map-overlay input {
+            background-color: transparent;
+            display: inline-block;
+            width: 100%;
+            position: relative;
+            margin: 0;
+            cursor: ew-resize;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <div class="map-overlay top">
+        <div class="map-overlay-inner">
+            <label>地形分類 不透明度: <span id="slider-opacity-value">50%</span></label>
+            <input id="slider-opacity" type="range" min="0" max="100" step="1" value="50">
+        </div>
+    </div>
+    <script type="text/javascript">
+        // add the PMTiles plugin to the maplibregl global.
+        let protocol = new pmtiles.Protocol();
+        maplibregl.addProtocol("pmtiles", protocol.tile);
+
+        // PLATEAU 2020_lod1_Building
+        let PM_PLATEAU_lod1_Building_URL = "https://pmtiles-data.s3.ap-northeast-1.amazonaws.com/plateau/PLATEAU_2020_LOD1.pmtiles";
+
+        const p = new pmtiles.PMTiles(PM_PLATEAU_lod1_Building_URL)
+        protocol.add(p);
+
+        const map = new maplibregl.Map({
+            container: 'map',
+            // style: 'building3d.json',
+            style: 'std.json',
+            // style: 'https://tile2.openstreetmap.jp/styles/osm-bright/style.json',
+            zoom: 15.46,
+            minZoom: 1,
+            maxZoom: 23,
+            pitch: 60,
+            bearing: -30,
+            center: [139.051916, 35.249186],
+            hash: true,
+            attributionControl: false
+        });
+
+        // ズーム・回転
+        map.addControl(new maplibregl.NavigationControl());
+
+        // フルスクリーンモードのオンオフ
+        map.addControl(new maplibregl.FullscreenControl());
+
+        // 現在位置表示
+        map.addControl(new maplibregl.GeolocateControl({
+            positionOptions: {
+                enableHighAccuracy: false
+            },
+            fitBoundsOptions: { maxZoom: 18 },
+            trackUserLocation: true,
+            showUserLocation: true
+        }));
+
+        // スケール表示
+        map.addControl(new maplibregl.ScaleControl({
+            maxWidth: 200,
+            unit: 'metric'
+        }));
+
+        // Attributionを折りたたみ表示
+        map.addControl(new maplibregl.AttributionControl({
+            compact: true,
+            customAttribution: '（<a href="https://twitter.com/syanseto" target="_blank">Twitter</a> | <a href="https://github.com/shi-works/gsi-terrain-dem-on-maplibre-gl-js" target="_blank">Github</a>） '
+        }));
+
+        // 3D地形コントロール
+        map.addControl(
+            new maplibregl.TerrainControl({
+                source: 'gsidem',
+                exaggeration: 1 // 標高を強調する倍率
+            })
+        );
+
+        map.on('load', () => {
+            // 標高タイル
+            map.addSource("gsidem", {
+                type: 'raster-dem',
+                tiles: [
+                    'gsidem://https://cyberjapandata.gsi.go.jp/xyz/dem_png/{z}/{x}/{y}.png',
+                ],
+                attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html#dem" target="_blank">地理院タイル(標高タイル)</a>',
+                tileSize: 256
+            });
+
+            map.setTerrain({ 'source': 'gsidem', 'exaggeration': 1 });
+
+            // 陰影起伏図
+            map.addSource("hillshade", {
+                type: 'raster',
+                tiles: [
+                    'https://cyberjapandata.gsi.go.jp/xyz/hillshademap/{z}/{x}/{y}.png',
+                ],
+                attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html#hillshademap" target="_blank">地理院タイル(陰影起伏図)</a>',
+                tileSize: 256
+            });
+
+            map.addLayer({
+                id: 'hillshade-tiles',
+                type: 'raster',
+                source: 'hillshade',
+                minzoom: 2,
+                maxzoom: 18,
+                paint: {
+                    'raster-opacity': 0.5
+                }
+            });
+
+            // 地形分類
+            map.addSource("landformclassification1", {
+                type: "vector",
+                tiles: [
+                    "https://optgeo.github.io/one/zxy/{z}/{x}/{y}.pbf"
+                ],
+                attribution: '<a href="https://github.com/gsi-cyberjapan/experimental_landformclassification" target="_blank">国土地理院ベクトルタイル提供実験（地形分類）</a>',
+                minzoom: 10,
+                maxzoom: 12
+            });
+
+            map.addLayer({
+                "id": 'landformclassification1-tiles',
+                "source": "landformclassification1",
+                "source-layer": "one",
+                "type": "fill",
+                "paint": {
+                    "fill-color": [
+                        "match",
+                        [
+                            "to-number",
+                            [
+                                "get",
+                                "code"
+                            ]
+                        ],
+                        [
+                            10101,
+                            1010101,
+                            11201,
+                            11202,
+                            11203,
+                            11204
+                        ],
+                        "#d9cbae",
+                        [
+                            10202,
+                            10204,
+                            2010201
+                        ],
+                        "#9466ab",
+                        [
+                            10205,
+                            10206
+                        ],
+                        "#cc99ff",
+                        [
+                            10301,
+                            10302,
+                            10303,
+                            10304,
+                            10308,
+                            10314,
+                            10305,
+                            10508,
+                            2010101,
+                            10306,
+                            10307,
+                            10310,
+                            10312
+                        ],
+                        "#ffaa00",
+                        [
+                            10401,
+                            10402,
+                            10403,
+                            10404,
+                            10406,
+                            10407,
+                            3010101
+                        ],
+                        "#99804d",
+                        [
+                            10501,
+                            10502,
+                            3020101
+                        ],
+                        "#cacc60",
+                        [
+                            10503,
+                            3040101
+                        ],
+                        "#ffff33",
+                        [
+                            10506,
+                            10507,
+                            10801
+                        ],
+                        "#fbe09d",
+                        [
+                            10504,
+                            10505,
+                            10512,
+                            3050101
+                        ],
+                        "#ffff99",
+                        [
+                            10601,
+                            2010301
+                        ],
+                        "#a3cc7e",
+                        [
+                            10701,
+                            3030101,
+                            10702,
+                            10705
+                        ],
+                        "#bbff99",
+                        [
+                            10703,
+                            10804,
+                            3030201
+                        ],
+                        "#00d1a4",
+                        [
+                            10704,
+                            3040201,
+                            3040202
+                        ],
+                        "#6699ff",
+                        [
+                            3040301
+                        ],
+                        "#1f9999",
+                        [
+                            10802,
+                            10803,
+                            10807,
+                            10808
+                        ],
+                        "#9f9fc4",
+                        [
+                            10805,
+                            10806,
+                            10901,
+                            10903,
+                            5010201
+                        ],
+                        "#e5ffff",
+                        [
+                            10904,
+                            5010301
+                        ],
+                        "#779999",
+                        [
+                            11001,
+                            11003,
+                            11009,
+                            11011,
+                            4010301
+                        ],
+                        "#85c4d1",
+                        [
+                            11002
+                        ],
+                        "#8ad8b6",
+                        [
+                            11004,
+                            11006,
+                            11007,
+                            11014
+                        ],
+                        "#ef8888",
+                        [
+                            4010201,
+                            11005
+                        ],
+                        "#ff4f4f",
+                        [
+                            11008,
+                            4010101
+                        ],
+                        "#c37aff",
+                        [
+                            11010
+                        ],
+                        "#ffe8e8",
+                        [
+                            999999
+                        ],
+                        "#144dfa",
+                        [
+                            101
+                        ],
+                        "#e6e600",
+                        [
+                            102
+                        ],
+                        "#00e2e6",
+                        [
+                            103
+                        ],
+                        "#2ae600",
+                        [
+                            104
+                        ],
+                        "#e60400",
+                        [
+                            105
+                        ],
+                        "#5e5ce6",
+                        [
+                            9999
+                        ],
+                        "#ff00ff",
+                        "#aaaaaa"
+                    ],
+                    'fill-opacity': 0.5
+                },
+            });
+
+            // スライダーで地形分類の不透明度を制御
+            const sliderOpactiy = document.getElementById('slider-opacity');
+            const sliderOpactiyValue = document.getElementById('slider-opacity-value');
+
+            sliderOpactiy.addEventListener('input', (e) => {
+                map.setPaintProperty(
+                    'landformclassification1-tiles',
+                    'fill-opacity',
+                    parseInt(e.target.value, 10) / 100
+                );
+                sliderOpactiyValue.textContent = e.target.value + '%';
+            });
+
+            /*
+            // PLATEAUベクトルタイル
+            map.addSource("lod1-Building", {
+                type: "vector",
+                url: "pmtiles://" + PM_PLATEAU_lod1_Building_URL,
+                attribution: '<a href="https://www.geospatial.jp/ckan/dataset/plateau">3D都市モデルProject PLATEAU 建築物データ（国土交通省）を加工して作成</a>'
+            });
+
+            // PLATEAUベクトルタイル
+            map.addLayer({
+                'id': 'lod1-Building',
+                'source': 'lod1-Building',
+                'source-layer': 'PLATEAU_2020_LOD1fgb',
+                "minzoom": 14,
+                "maxzoom": 18,
+                'layout': {
+                    'visibility': 'visible',
+                },
+                'type': 'fill-extrusion',
+                'paint': {
+                    "fill-extrusion-color": "#aaa",
+                    "fill-extrusion-opacity": 0.7,
+                    "fill-extrusion-height": ["get", "bldg_measuredHeight"]
+                }
+            });
+            */
+
+            // 地理院地図ベクトルタイル
+            map.addSource("gsibv-vectortile-source-1-4-16", {
+                type: "vector",
+                tiles: [
+                    "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/{z}/{x}/{y}.pbf"
+                ],
+                attribution: '<a href="https://github.com/gsi-cyberjapan/gsivectortile-3d-like-building">地理院地図Vector（仮称）</a>'
+            });
+
+            // 地理院地図ベクトルタイル
+            map.addLayer({
+                "source": "gsibv-vectortile-source-1-4-16",
+                "minzoom": 13,
+                "maxzoom": 18,
+                "id": "buildings4302",
+                "metadata": { "name": "タンク" },
+                "type": "fill-extrusion",
+                "source-layer": "structurea",
+                "filter": ["all", ["==", "ftCode", 4302], ["==", "$type", "Polygon"]],
+                "paint": {
+                    "fill-extrusion-color": "rgb(0,100,150)",
+                    "fill-extrusion-opacity": 0.8,
+                    "fill-extrusion-height": 10
+                }
+            });
+
+            map.addLayer({
+                "source": "gsibv-vectortile-source-1-4-16",
+                "minzoom": 13,
+                "maxzoom": 18,
+                "id": "buildings4301",
+                "metadata": { "name": "巨大構造物" },
+                "type": "fill-extrusion",
+                "source-layer": "structurea",
+                "filter": ["all", ["==", "ftCode", 4301], ["==", "$type", "Polygon"]],
+                "paint": {
+                    "fill-extrusion-color": "rgb(0,100,150)",
+                    "fill-extrusion-opacity": 0.8,
+                    "fill-extrusion-height": 100
+                }
+            });
+
+            map.addLayer({
+                "source": "gsibv-vectortile-source-1-4-16",
+                "minzoom": 14,
+                "maxzoom": 18,
+                "id": "buildings3111",
+                "metadata": { "name": "普通無壁舎" },
+                "type": "fill-extrusion",
+                "source-layer": "building",
+                "filter": ["all", ["==", "ftCode", 3111], ["==", "$type", "Polygon"]],
+                "paint": {
+                    "fill-extrusion-color": "rgb(0,100,150)",
+                    "fill-extrusion-opacity": 0.5,
+                    "fill-extrusion-height": 10
+                }
+            });
+
+            map.addLayer({
+                "source": "gsibv-vectortile-source-1-4-16",
+                "minzoom": 13,
+                "maxzoom": 18,
+                "id": "buildings3112",
+                "metadata": { "name": "堅ろう無壁舎" },
+                "type": "fill-extrusion",
+                "source-layer": "building",
+                "filter": ["all", ["==", "ftCode", 3112], ["==", "$type", "Polygon"]],
+                "paint": {
+                    "fill-extrusion-color": "rgb(150,200,255)",
+                    "fill-extrusion-opacity": 0.5,
+                    "fill-extrusion-height": 40
+                }
+            });
+
+            map.addLayer({
+                "source": "gsibv-vectortile-source-1-4-16",
+                "minzoom": 14,
+                "maxzoom": 18,
+                "id": "buildings3101",
+                "metadata": { "name": "普通建物" },
+                "type": "fill-extrusion",
+                "source-layer": "building",
+                "filter": ["all", ["==", "ftCode", 3101], ["==", "$type", "Polygon"]],
+                "paint": {
+                    "fill-extrusion-color": "rgb(0,100,150)",
+                    "fill-extrusion-opacity": 0.8,
+                    "fill-extrusion-height": 10
+                }
+            });
+
+            map.addLayer({
+                "source": "gsibv-vectortile-source-1-4-16",
+                "minzoom": 13,
+                "maxzoom": 18,
+                "id": "buildings3102",
+                "metadata": { "name": "堅ろう建物" },
+                "type": "fill-extrusion",
+                "source-layer": "building",
+                "filter": ["all", ["==", "ftCode", 3102], ["==", "$type", "Polygon"]],
+                "paint": {
+                    "fill-extrusion-color": "rgb(150,200,255)",
+                    "fill-extrusion-opacity": 0.8,
+                    "fill-extrusion-height": 40
+                }
+            });
+
+            map.addLayer({
+                "source": "gsibv-vectortile-source-1-4-16",
+                "minzoom": 13,
+                "maxzoom": 18,
+                "id": "buildings3103",
+                "metadata": { "name": "高層建物" },
+                "type": "fill-extrusion",
+                "source-layer": "building",
+                "filter": ["all", ["==", "ftCode", 3103], ["==", "$type", "Polygon"]],
+                "paint": {
+                    "fill-extrusion-color": "rgb(0,255,255)",
+                    "fill-extrusion-opacity": 0.8,
+                    "fill-extrusion-height": 100
+                }
+            });
+
+            // map.showTileBoundaries = true;
+
+        })
+    </script>
+</body>
+
+</html>
