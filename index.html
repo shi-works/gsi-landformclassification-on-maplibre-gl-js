@@ -1,7 +1,7 @@
 <html>
 
 <head>
-    <title>地形分類図（pbf）</title>
+    <title>地形分類図（PMTiles）</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src='https://unpkg.com/maplibre-gl@3.1.0/dist/maplibre-gl.js'></script>
@@ -53,6 +53,39 @@
             margin: 0;
             cursor: ew-resize;
         }
+
+        .legend {
+            background-color: #fff;
+            border-radius: 3px;
+            bottom: 40px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.10);
+            font: 12px/14px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+            padding: 10px;
+            position: absolute;
+            right: 10px;
+            z-index: 1;
+            line-height: 10px;
+            height: auto;
+        }
+
+        .legend h4 {
+            margin: 0 0 10px;
+        }
+
+        .legend div span {
+            border-radius: 50%;
+            display: inline-block;
+            height: 15px;
+            margin-right: 10px;
+            width: 15px;
+            color: orangered
+        }
+
+        .square {
+            width: 15px;
+            height: 15px;
+            /*border-radius: 4px;*/
+        }
     </style>
 </head>
 
@@ -60,11 +93,73 @@
     <div id="map"></div>
     <div class="map-overlay top">
         <div class="map-overlay-inner">
-            <label>地形分類 不透明度: <span id="slider-opacity-value">50%</span></label>
-            <input id="slider-opacity" type="range" min="0" max="100" step="1" value="50">
+            <label>地形分類 不透明度: <span id="chikei-slider-opacity-value">50%</span></label>
+            <input id="chikei-slider-opacity" type="range" min="0" max="100" step="1" value="50">
+            <label>陰影起伏図 不透明度: <span id="inei-slider-opacity-value">50%</span></label>
+            <input id="inei-slider-opacity" type="range" min="0" max="100" step="1" value="50">
         </div>
     </div>
+    <div id='legend' class='legend'>
+        <h4>地形分類</h4>
+        <div class="square" style='background-color: #d9cbae; display: inline-block;'>
+        </div><span style="display: inline-block; margin-left: 5px;">山地</span><br>
+        <div class="square" style='background-color: #9466ab; display: inline-block;'>
+        </div><span style="display: inline-block; margin-left: 5px;">崖･段丘崖</span><br>
+        <div class="square" style='background-color: #cc99ff; display: inline-block;'>
+        </div><span style="display: inline-block; margin-left: 5px;">地すべり</span><br>
+        <div class="square" style='background-color: #ffaa00; display: inline-block;'>
+        </div><span style="display: inline-block; margin-left: 5px;">台地・段丘</span><br>
+        <div class="square" style='background-color: #99804d; display: inline-block;'>
+        </div><span style="display: inline-block; margin-left: 5px;">山麓堆積地形</span><br>
+        <div class="square" style='background-color: #cacc60; display: inline-block;'>
+        </div><span style="display: inline-block; margin-left: 5px;">扇状地</span><br>
+        <div class="square" style='background-color: #ffff33; display: inline-block;'>
+        </div><span style="display: inline-block; margin-left: 5px;">自然堤防</span><br>
+        <div class="square" style='background-color: #fbe09d; display: inline-block;'>
+        </div><span style="display: inline-block; margin-left: 5px;">天井川</span><br>
+        <div class="square" style='background-color: #ffff99; display: inline-block;'>
+        </div><span style="display: inline-block; margin-left: 5px;">砂州・砂丘</span><br>
+        <div class="square" style='background-color: #a3cc7e; display: inline-block;'>
+        </div><span style="display: inline-block; margin-left: 5px;">凹地・浅い谷</span><br>
+        <div class="square" style='background-color: #bbff99; display: inline-block;'>
+        </div><span style="display: inline-block; margin-left: 5px;">氾濫平野</span><br>
+        <div class="square" style='background-color: #00d1a4; display: inline-block;'>
+        </div><span style="display: inline-block; margin-left: 5px;">後背低地・湿地</span><br>
+        <div class="square" style='background-color: #6699ff; display: inline-block;'>
+        </div><span style="display: inline-block; margin-left: 5px;">旧河道</span><br>
+        <div class="square" style='background-color: #1f9999; display: inline-block;'>
+        </div><span style="display: inline-block; margin-left: 5px;">落堀</span><br>
+        <div class="square" style='background-color: #9f9fc4; display: inline-block;'>
+        </div><span style="display: inline-block; margin-left: 5px;">河川敷・浜</span><br>
+        <div class="square" style='background-color: #e5ffff; display: inline-block;'>
+        </div><span style="display: inline-block; margin-left: 5px;">水部</span><br>
+        <div class="square" style='background-color: #779999; display: inline-block;'>
+        </div><span style="display: inline-block; margin-left: 5px;">旧水部</span><br>
+        <div class="square" style='background-color: #85c4d1; display: inline-block;'>
+        </div><span style="display: inline-block; margin-left: 5px;">切土地</span><br>
+        <div class="square" style='background-color: #8ad8b6; display: inline-block;'>
+        </div><span style="display: inline-block; margin-left: 5px;">農耕平坦化地</span><br>
+        <div class="square" style='background-color: #ef8888; display: inline-block;'>
+        </div><span style="display: inline-block; margin-left: 5px;">盛土地・埋立地</span><br>
+        <div class="square" style='background-color: #ff4f4f; display: inline-block;'>
+        </div><span style="display: inline-block; margin-left: 5px;">高い盛土地</span><br>
+        <div class="square" style='background-color: #c37aff; display: inline-block;'>
+        </div><span style="display: inline-block; margin-left: 5px;">干拓地</span><br>
+        <div class="square" style='background-color: #ffe8e8; display: inline-block;'>
+        </div><span style="display: inline-block; margin-left: 5px;">改変工事中</span><br>
+    </div>
     <script type="text/javascript">
+        let protocol = new pmtiles.Protocol();
+        maplibregl.addProtocol("pmtiles", protocol.tile);
+
+        // 地形分類ベクトルタイル
+        let PMTiles_URL = "https://xs489works.xsrv.jp/pmtiles-data/landform/landformclassification1_modified.pmtiles";
+
+        const p = new pmtiles.PMTiles(PMTiles_URL)
+        p.getMetadata().then((res) => console.log(res));
+
+        protocol.add(p);
+
         /*
         // add the PMTiles plugin to the maplibregl global.
         let protocol = new pmtiles.Protocol();
@@ -162,7 +257,27 @@
                 }
             });
 
-            // 地形分類
+            // スライダーで陰影起伏図の不透明度を制御
+            const inei_sliderOpactiy = document.getElementById('inei-slider-opacity');
+            const inei_sliderOpactiyValue = document.getElementById('inei-slider-opacity-value');
+
+            inei_sliderOpactiy.addEventListener('input', (e) => {
+                map.setPaintProperty(
+                    'hillshade-tiles',
+                    'raster-opacity',
+                    parseInt(e.target.value, 10) / 100
+                );
+                inei_sliderOpactiyValue.textContent = e.target.value + '%';
+            });
+
+            // 地形分類ベクトルタイル
+            map.addSource("landformclassification1", {
+                type: "vector",
+                url: "pmtiles://" + PMTiles_URL,
+                attribution: '<a href="https://github.com/gsi-cyberjapan/experimental_landformclassification" target="_blank">国土地理院ベクトルタイル提供実験（地形分類）</a>',
+            });
+
+            /*
             map.addSource("landformclassification1", {
                 type: "vector",
                 tiles: [
@@ -172,12 +287,15 @@
                 minzoom: 10,
                 maxzoom: 12
             });
+            */
 
             map.addLayer({
                 "id": 'landformclassification1-tiles',
                 "source": "landformclassification1",
-                "source-layer": "one",
+                "source-layer": "landformclassification1_modifiedfgb",
                 "type": "fill",
+                minzoom: 9,
+                maxzoom: 23,
                 "paint": {
                     "fill-color": [
                         "match",
@@ -374,16 +492,16 @@
             });
 
             // スライダーで地形分類の不透明度を制御
-            const sliderOpactiy = document.getElementById('slider-opacity');
-            const sliderOpactiyValue = document.getElementById('slider-opacity-value');
+            const chikei_sliderOpactiy = document.getElementById('chikei-slider-opacity');
+            const chikei_sliderOpactiyValue = document.getElementById('chikei-slider-opacity-value');
 
-            sliderOpactiy.addEventListener('input', (e) => {
+            chikei_sliderOpactiy.addEventListener('input', (e) => {
                 map.setPaintProperty(
                     'landformclassification1-tiles',
                     'fill-opacity',
                     parseInt(e.target.value, 10) / 100
                 );
-                sliderOpactiyValue.textContent = e.target.value + '%';
+                chikei_sliderOpactiyValue.textContent = e.target.value + '%';
             });
 
             /*
