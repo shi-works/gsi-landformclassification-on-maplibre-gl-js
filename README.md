@@ -8,5 +8,5 @@ https://shi-works.github.io/landformclassification-on-maplibre-gl-js/
 ### PMTiles
 `https://xs489works.xsrv.jp/pmtiles-data/landform/landformclassification1_modified.pmtiles`,433MB  
 ### GeoParquet
-- [属性コード（code）の対応表](https://www.gsi.go.jp/bousaichiri/bousaichiri41017.html)を参照してください。  
+- 属性コード（code）は[対応表](https://www.gsi.go.jp/bousaichiri/bousaichiri41017.html)を参照してください。  
 `https://xs489works.xsrv.jp/pmtiles-data/landform/landformclassification1_modified.parquet`,788MB
