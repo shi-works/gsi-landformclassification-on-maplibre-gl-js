@@ -12,4 +12,4 @@ https://shi-works.github.io/gsi-landformclassification-on-maplibre-gl-js/
 - 属性コード（code）と地形分類の対応は[国土地理院のベクトルタイル「地形分類」の凡例対応表](https://www.gsi.go.jp/bousaichiri/bousaichiri41017.html)を参照してください。
 
 - QGIS QMLスタイルファイル
-
+https://github.com/shi-works/gsi-landformclassification-on-maplibre-gl-js/blob/main/qgis_symbology.qml
