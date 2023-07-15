@@ -148,6 +148,10 @@
         <div class="square" style='background-color: #ffe8e8; display: inline-block;'>
         </div><span style="display: inline-block; margin-left: 5px;">改変工事中</span><br>
     </div>
+    <!-- Load the `maplibre-gl-geocoder` plugin. -->
+    <script src="https://unpkg.com/@maplibre/maplibre-gl-geocoder@1.2.0/dist/maplibre-gl-geocoder.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@maplibre/maplibre-gl-geocoder@1.2.0/dist/maplibre-gl-geocoder.css"
+        type="text/css" />
     <script type="text/javascript">
         let protocol = new pmtiles.Protocol();
         maplibregl.addProtocol("pmtiles", protocol.tile);
@@ -177,15 +181,62 @@
             // style: 'building3d.json',
             style: 'std.json',
             // style: 'https://tile2.openstreetmap.jp/styles/osm-bright/style.json',
-            zoom: 15.46,
+            zoom: 11.87,
             minZoom: 1,
             maxZoom: 23,
-            pitch: 60,
-            bearing: -30,
-            center: [139.051916, 35.249186],
+            pitch: 0,
+            bearing: 0,
+            center: [130.65147, 33.34014],
             hash: true,
             attributionControl: false
         });
+
+        // ジオコーダー追加
+        var geocoder_api = {
+            forwardGeocode: async (config) => {
+                const features = [];
+                try {
+                    let request =
+                        'https://nominatim.openstreetmap.org/search?q=' +
+                        config.query +
+                        '&format=geojson&polygon_geojson=1&addressdetails=1';
+                    const response = await fetch(request);
+                    const geojson = await response.json();
+                    for (let feature of geojson.features) {
+                        let center = [
+                            feature.bbox[0] +
+                            (feature.bbox[2] - feature.bbox[0]) / 2,
+                            feature.bbox[1] +
+                            (feature.bbox[3] - feature.bbox[1]) / 2
+                        ];
+                        let point = {
+                            type: 'Feature',
+                            geometry: {
+                                type: 'Point',
+                                coordinates: center
+                            },
+                            place_name: feature.properties.display_name,
+                            properties: feature.properties,
+                            text: feature.properties.display_name,
+                            place_type: ['place'],
+                            center: center
+                        };
+                        features.push(point);
+                    }
+                } catch (e) {
+                    console.error(`Failed to forwardGeocode with error: ${e}`);
+                }
+
+                return {
+                    features: features
+                };
+            }
+        };
+
+        map.addControl(
+            new MaplibreGeocoder(geocoder_api, {
+                maplibregl: maplibregl
+            }), 'top-right');
 
         // ズーム・回転
         map.addControl(new maplibregl.NavigationControl());
@@ -270,7 +321,7 @@
                 inei_sliderOpactiyValue.textContent = e.target.value + '%';
             });
 
-            // 地形分類ベクトルタイル
+            // 地形分類ベクトルタイル（PMTiles）
             map.addSource("landformclassification1", {
                 type: "vector",
                 url: "pmtiles://" + PMTiles_URL,
@@ -278,6 +329,7 @@
             });
 
             /*
+            // 地形分類ベクトルタイル（pbf）
             map.addSource("landformclassification1", {
                 type: "vector",
                 tiles: [
@@ -285,7 +337,7 @@
                 ],
                 attribution: '<a href="https://github.com/gsi-cyberjapan/experimental_landformclassification" target="_blank">国土地理院ベクトルタイル提供実験（地形分類）</a>',
                 minzoom: 10,
-                maxzoom: 12
+                maxzoom: 18
             });
             */
 
@@ -293,6 +345,7 @@
                 "id": 'landformclassification1-tiles',
                 "source": "landformclassification1",
                 "source-layer": "landformclassification1_modifiedfgb",
+                // "source-layer": "one",
                 "type": "fill",
                 minzoom: 9,
                 maxzoom: 23,
@@ -541,6 +594,7 @@
             });
 
             // 地理院地図ベクトルタイル
+            // タンク
             map.addLayer({
                 "source": "gsibv-vectortile-source-1-4-16",
                 "minzoom": 13,
@@ -551,12 +605,14 @@
                 "source-layer": "structurea",
                 "filter": ["all", ["==", "ftCode", 4302], ["==", "$type", "Polygon"]],
                 "paint": {
-                    "fill-extrusion-color": "rgb(0,100,150)",
+                    // "fill-extrusion-color": "rgb(0,100,150)",
+                    "fill-extrusion-color": "rgb(242,234,226)",
                     "fill-extrusion-opacity": 0.8,
                     "fill-extrusion-height": 10
                 }
             });
 
+            // 巨大構造物
             map.addLayer({
                 "source": "gsibv-vectortile-source-1-4-16",
                 "minzoom": 13,
@@ -567,12 +623,14 @@
                 "source-layer": "structurea",
                 "filter": ["all", ["==", "ftCode", 4301], ["==", "$type", "Polygon"]],
                 "paint": {
-                    "fill-extrusion-color": "rgb(0,100,150)",
+                    // "fill-extrusion-color": "rgb(0,100,150)",
+                    "fill-extrusion-color": "rgb(242,234,226)",
                     "fill-extrusion-opacity": 0.8,
                     "fill-extrusion-height": 100
                 }
             });
 
+            // 普通無壁舎
             map.addLayer({
                 "source": "gsibv-vectortile-source-1-4-16",
                 "minzoom": 14,
@@ -583,12 +641,14 @@
                 "source-layer": "building",
                 "filter": ["all", ["==", "ftCode", 3111], ["==", "$type", "Polygon"]],
                 "paint": {
-                    "fill-extrusion-color": "rgb(0,100,150)",
+                    // "fill-extrusion-color": "rgb(0,100,150)",
+                    "fill-extrusion-color": "rgb(242,234,226)",
                     "fill-extrusion-opacity": 0.5,
                     "fill-extrusion-height": 10
                 }
             });
 
+            // 堅ろう無壁舎
             map.addLayer({
                 "source": "gsibv-vectortile-source-1-4-16",
                 "minzoom": 13,
@@ -605,6 +665,7 @@
                 }
             });
 
+            // 普通建物
             map.addLayer({
                 "source": "gsibv-vectortile-source-1-4-16",
                 "minzoom": 14,
@@ -615,12 +676,14 @@
                 "source-layer": "building",
                 "filter": ["all", ["==", "ftCode", 3101], ["==", "$type", "Polygon"]],
                 "paint": {
-                    "fill-extrusion-color": "rgb(0,100,150)",
+                    // "fill-extrusion-color": "rgb(0,100,150)",
+                    "fill-extrusion-color": "rgb(242,234,226)",
                     "fill-extrusion-opacity": 0.8,
                     "fill-extrusion-height": 10
                 }
             });
 
+            // 堅ろう建物
             map.addLayer({
                 "source": "gsibv-vectortile-source-1-4-16",
                 "minzoom": 13,
@@ -637,6 +700,7 @@
                 }
             });
 
+            // 高層建物
             map.addLayer({
                 "source": "gsibv-vectortile-source-1-4-16",
                 "minzoom": 13,
@@ -653,7 +717,7 @@
                 }
             });
 
-            // map.showTileBoundaries = true;
+            map.showTileBoundaries = true;
 
         })
     </script>
