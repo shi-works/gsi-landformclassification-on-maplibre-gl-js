@@ -1,7 +1,7 @@
 <html>
 
 <head>
-    <title>地形分類図（PMTiles）</title>
+    <title>地形分類図（自然地形）（PMTiles）</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src='https://unpkg.com/maplibre-gl@3.1.0/dist/maplibre-gl.js'></script>
@@ -136,6 +136,7 @@
         </div><span style="display: inline-block; margin-left: 5px;">水部</span><br>
         <div class="square" style='background-color: #779999; display: inline-block;'>
         </div><span style="display: inline-block; margin-left: 5px;">旧水部</span><br>
+        <!--
         <div class="square" style='background-color: #85c4d1; display: inline-block;'>
         </div><span style="display: inline-block; margin-left: 5px;">切土地</span><br>
         <div class="square" style='background-color: #8ad8b6; display: inline-block;'>
@@ -148,6 +149,7 @@
         </div><span style="display: inline-block; margin-left: 5px;">干拓地</span><br>
         <div class="square" style='background-color: #ffe8e8; display: inline-block;'>
         </div><span style="display: inline-block; margin-left: 5px;">改変工事中</span><br>
+        -->
     </div>
     <!-- Load the `maplibre-gl-geocoder` plugin. -->
     <script src="https://unpkg.com/@maplibre/maplibre-gl-geocoder@1.2.0/dist/maplibre-gl-geocoder.min.js"></script>
@@ -264,7 +266,7 @@
         // Attributionを折りたたみ表示
         map.addControl(new maplibregl.AttributionControl({
             compact: true,
-            customAttribution: '（<a href="https://twitter.com/shi__works" target="_blank">Twitter</a> | <a href="https://github.com/shi-works/landformclassification-on-maplibre-gl-js" target="_blank">Github</a>） '
+            customAttribution: '（<a href="https://twitter.com/syanseto" target="_blank">Twitter</a> | <a href="https://github.com/shi-works/landformclassification-on-maplibre-gl-js" target="_blank">Github</a>） '
         }));
 
         // 3D地形コントロール
