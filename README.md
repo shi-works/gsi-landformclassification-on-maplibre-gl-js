@@ -2,7 +2,7 @@
 ## Public Website
 https://shi-works.github.io/gsi-landformclassification-on-maplibre-gl-js/
 
-![image](https://github.com/shi-works/landformclassification-on-maplibre-gl-js/assets/71203808/6f25f0ca-4571-4afb-8360-f4544ff7b46f)
+![image](https://github.com/shi-works/gsi-landformclassification-on-maplibre-gl-js/assets/71203808/0ba9bf83-dfe5-4db0-94b6-332e5f5a990f)
 
 ## Data Source
 ### 治水地形分類
